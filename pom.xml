@@ -6,98 +6,11 @@
 
 
     <groupId>uk.co.pacmanvghosts</groupId>
-    <artifactId>pacman-main</artifactId>
-    <version>2.0.1.0</version>
-    <name>PacMan Vs Ghosts</name>
-    <description>The main code for Ms. Pac-Man Vs Ghosts</description>
-    <url>http://www.pacmanvghosts.co.uk</url>
-
-    <licenses>
-        <license>
-            <name>GNU GPL V3+</name>
-            <url>https://www.gnu.org/licenses/gpl.html</url>
-        </license>
-    </licenses>
-    <scm>
-        <connection>scm:git:git@github.com:solar-1992/PacManEngine</connection>
-        <developerConnection>scm:git:git@github.com:solar-1992/PacManEngine</developerConnection>
-        <url>git@github.com:solar-1992/PacManEngine</url>
-    </scm>
-
-    <developers>
-        <developer>
-            <name>Piers R. Williams</name>
-            <email>pwillic@essex.ac.uk</email>
-            <organization>University of Essex</organization>
-            <organizationUrl>www.essex.ac.uk</organizationUrl>
-        </developer>
-    </developers>
-
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-        </snapshotRepository>
-    </distributionManagement>
-
+    <!-- Change the artifactId to your username on the site -->
+    <artifactId>MsPacman</artifactId>
+    <version>1.0-SNAPSHOT</version>
     <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-            </resource>
-        </resources>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.5</version>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>2.2.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar-no-fork</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.3</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <serverId>ossrh</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -105,26 +18,26 @@
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
-					<excludes>
-						<!-- Exclude the server logic -->
-                        <exclude>pacman/test/*.java</exclude>
-					</excludes>
+                    <excludes>
+                        <exclude>Main.java</exclude>
+                        <exclude>**/examples/**/*.java</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <!-- other plugins here -->
-
         </plugins>
     </build>
     <dependencies>
+        <!-- Don't remove this dependency - you'll be needing it to compile the code on the server -->
         <dependency>
-            <groupId>com.fossgalaxy.util</groupId>
-            <artifactId>object-creator</artifactId>
-            <version>1.3</version>
+            <groupId>uk.co.pacmanvghosts</groupId>
+            <artifactId>pacman-main</artifactId>
+            <version>[2,]</version>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.21</version>
+            <groupId>io.jenetics</groupId>
+            <artifactId>jenetics</artifactId>
+            <version>3.7.0</version>
         </dependency>
     </dependencies>
 </project>

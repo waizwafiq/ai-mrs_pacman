@@ -38,6 +38,8 @@
 # JIRA plugin
 atlassian-ide-plugin.xml
 
+#google sync
+desktop.ini
 target/
 results/
 data2/
