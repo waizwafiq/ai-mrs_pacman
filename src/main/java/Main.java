@@ -35,6 +35,6 @@ public class Main {
         controllers.put(GHOST.PINKY, new Pinky());
         controllers.put(GHOST.SUE, new Sue());
 
-        executor.runGameTimed(new TreeSearchPacMan(), new MASController(controllers));
+        executor.runGame(new TreeSearchPacMan(), new MASController(controllers), 100);
     }
 }
