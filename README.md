@@ -5,5 +5,6 @@ implemented based on this paper https://www.researchgate.net/publication/2211575
 At each time-step, Ms pacman will perform a spatial tree-search (not state search) which returns a set of paths.
 It then decides using a hard-coded rule to select the best path (e.g, the path with most rewards and fewer enemies)
 
+Run Main.java
 ![Alt text](screenshot.png?raw=true "tree search Ms. pacman")
 
