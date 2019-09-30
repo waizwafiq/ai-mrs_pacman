@@ -18,10 +18,6 @@
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
-                    <excludes>
-                        <exclude>Main.java</exclude>
-                        <exclude>**/examples/**/*.java</exclude>
-                    </excludes>
                 </configuration>
             </plugin>
             <!-- other plugins here -->
