@@ -3,6 +3,7 @@ package examples.StarterPacMan;
 import pacman.Executor;
 import pacman.controllers.PacmanController;
 import pacman.game.Constants;
+import pacman.game.Constants.DM;
 import pacman.game.Constants.GHOST;
 import pacman.game.Constants.MOVE;
 import pacman.game.Game;
@@ -26,10 +27,19 @@ public class TreeSearchPacMan extends PacmanController {
 	 private static final Random RANDOM = new Random(); 
 	 private Game game;
 	 private int pacmanCurrentNodeIndex;
-	 MOVE pacmanLastMoveMade;
-	 int pathLength = 70; // Can auto tune using evolution techniques
-	 int minGhostDistance = 50; // Can auto tune using evolution techniques
+	 MOVE pacmanLastMoveMade; 
+	 int pathLengthBase = 94; // 70, 70 // Make it longer when no pills around
+	 int minGhostDistanceBase = 100; // 80, 100
 	 private List<Path> paths = new ArrayList<>();
+	 
+	private int getRandomInt(int min, int max){
+		if (min >= max) {
+			throw new IllegalArgumentException("max must be greater than min");
+		}
+
+		Random r = new Random();
+		return r.nextInt((max - min) + 1) + min;		
+	}
 	 
     @Override
     public MOVE getMove(Game game, long timeDue) {
@@ -37,6 +47,9 @@ public class TreeSearchPacMan extends PacmanController {
     	pacmanCurrentNodeIndex = game.getPacmanCurrentNodeIndex();
     	pacmanLastMoveMade = game.getPacmanLastMoveMade();
     		   	
+    	// Random path length and minGhostDistance
+    	int pathLength = pathLengthBase /*+ getRandomInt(-50, 10)*/;
+    	
     	// Get possible paths
     	paths = getPaths(pathLength);
     	
@@ -54,6 +67,7 @@ public class TreeSearchPacMan extends PacmanController {
     	// No pills around while at junction but has safe paths, choose random safe path
 		if (bestPath.value == 0 && game.isJunction(pacmanCurrentNodeIndex))
 		{
+			// Get only safe paths from paths
     		List<MOVE> safeMoves = new ArrayList<>();
     		for (Path path: paths)
     		{
@@ -125,7 +139,6 @@ public class TreeSearchPacMan extends PacmanController {
     	public List<Segment> segments = new ArrayList<Segment>();
     	public int length;
     	public String description = "";
-    	private String summary = "";
     	public boolean safe = true;
     	public int value = 0;
     	    
@@ -172,7 +185,7 @@ public class TreeSearchPacMan extends PacmanController {
         		length = lastSegment.lengthSoFar;
         		pillsCount = lastSegment.pillsCount;
         		value = pillsCount;
-        		powerPillsCount += lastSegment.powerPillsCount;
+        		powerPillsCount = lastSegment.powerPillsCount;
         		int unsafeSegmentsCount = 0;      		                		
         		
         		for (Segment segment : segments)
@@ -185,9 +198,9 @@ public class TreeSearchPacMan extends PacmanController {
             				{
             					int distance = game.getShortestPathDistance(pacmanCurrentNodeIndex, game.getGhostCurrentNodeIndex(ghost));
             					if (distance < 10)
-                					value += 15;
+                					value += 1;//15;
             					else
-            						value += 10;
+            						value += 1;//10;
             				}
         			}
         			
@@ -201,8 +214,7 @@ public class TreeSearchPacMan extends PacmanController {
         				segment.color = Color.RED;
         			}
         			       			
-        			if (segment.powerPillsCount > 0)
-        				value += 5;
+    				value += segment.powerPillsCount * 5;          				 				
         			
         			description += segment.direction.toString() + " ";
         		}
@@ -230,7 +242,8 @@ public class TreeSearchPacMan extends PacmanController {
     {
     	MOVE[] startingPossibleMoves = game.getPossibleMoves(pacmanCurrentNodeIndex);
     	List<Path> paths = new ArrayList<>();
-    	
+    	int minGhostDistance = minGhostDistanceBase /*+ getRandomInt(10, 30)*/;
+
     	// Start searching from the possible moves at the current pacman location
     	for (MOVE startingPossibleMove : startingPossibleMoves)
 		{   
@@ -327,7 +340,7 @@ public class TreeSearchPacMan extends PacmanController {
     			     
     			MOVE[] possibleMoves = game.getPossibleMoves(currentNode, currentSegment.direction);
 
-        		// Neighbor is a junction
+        		// If neighbor is a junction or a corner, end the current segment and create a new segment
         		if (possibleMoves.length > 1 || (possibleMoves.length == 1 && possibleMoves[0] != currentSegment.direction))
         		{
         			currentSegment.end = currentNode;
