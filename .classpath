@@ -53,5 +53,9 @@
 			<attribute name="test" value="true"/>
 		</attributes>
 	</classpathentry>
+
+	<classpathentry kind="lib" path="lib/jfreechart-1.0.19.jar"/>
+    <classpathentry kind="lib" path="lib/jcommon-1.0.23.jar"/>
+	
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
