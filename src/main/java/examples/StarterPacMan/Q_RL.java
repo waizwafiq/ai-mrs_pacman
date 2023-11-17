@@ -47,14 +47,39 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.ui.ApplicationFrame;
+import org.jfree.ui.RefineryUtilities;
+
+import java.util.ArrayList;
+import java.util.Collections;
+
 public class Q_RL extends PacmanController {
     private static final double LEARNING_RATE = 0.1;
     private static final double DISCOUNT_FACTOR = 0.9;
     private static final double EXPLORATION_PROBABILITY = 0.1;
+    private static final int MIN_DISTANCE_TO_EVADE_GHOST = 25;
+
+    private ArrayList<Double> current_reward = new ArrayList<>(Collections.singletonList(0.0));
+
+    private static final double PILL_REWARD = 1;
+    private static final double EATING_EDIBLE_GHOST_REWARD = 50.0;
+    private static final double LEVEL_UP_REWARD = 50.0;
+    private static final double CAUGHT_BY_NON_EDIBLE_GHOST_PENALTY = -25.0;
+    private static final double DECAY_PENALTY = -0.05;
 
     private Random random = new Random();
     private Map<StateActionPair, Double> qValues = new HashMap<>();
     private MOVE lastMove;
+
+    private void printMoveInfo(String info, MOVE move, Game game) {
+        double reward = calculateReward(game);
+        System.out.println(info + " - Current Move: " + move + " - Current Reward: " + reward);
+    }
 
     @Override
     public MOVE getMove(Game game, long timeDue) {
@@ -67,9 +92,11 @@ public class Q_RL extends PacmanController {
             if (game.getGhostEdibleTime(ghost) == 0 && game.getGhostLairTime(ghost) == 0) {
                 int ghostLocation = game.getGhostCurrentNodeIndex(ghost);
                 if (ghostLocation != -1) {
-                    if (game.getShortestPathDistance(current, ghostLocation) < 20) {
+                    if (game.getShortestPathDistance(current, ghostLocation) < MIN_DISTANCE_TO_EVADE_GHOST) {
                         // Evade the ghost
-                        return game.getNextMoveAwayFromTarget(current, ghostLocation, Constants.DM.PATH);
+                        MOVE evadeMove = game.getNextMoveAwayFromTarget(current, ghostLocation, Constants.DM.PATH);
+                        printMoveInfo("Evading ghost", evadeMove, game);
+                        return evadeMove;
                     }
                 }
             }
@@ -83,19 +110,23 @@ public class Q_RL extends PacmanController {
             Boolean pillStillAvailable = game.isPillStillAvailable(i);
             if (pillStillAvailable != null && pillStillAvailable) {
                 // Move towards the nearest visible pill
-                return game.getNextMoveTowardsTarget(current, pills[i], Constants.DM.PATH);
+                MOVE pillMove = game.getNextMoveTowardsTarget(current, pills[i], Constants.DM.PATH);
+                printMoveInfo("Going after visible pill", pillMove, game);
+                return pillMove;
             }
         }
 
         for (int i = 0; i < powerPills.length; i++) {
-            Boolean pillStillAvailable = game.isPillStillAvailable(i);
-            if (pillStillAvailable != null && pillStillAvailable) {
+            Boolean powerPillStillAvailable = game.isPowerPillStillAvailable(i);
+            if (powerPillStillAvailable != null && powerPillStillAvailable) {
                 // Move towards the nearest visible power pill
-                return game.getNextMoveTowardsTarget(current, powerPills[i], Constants.DM.PATH);
+                MOVE powerPillMove = game.getNextMoveTowardsTarget(current, powerPills[i], Constants.DM.PATH);
+                printMoveInfo("Going after visible power pill", powerPillMove, game);
+                return powerPillMove;
             }
         }
 
-        /// Strategy 3: Find nearest edible ghost and go after them
+        // Strategy 3: Find nearest edible ghost and go after them
         int minDistance = Integer.MAX_VALUE;
         Constants.GHOST minGhost = null;
         for (Constants.GHOST ghost : Constants.GHOST.values()) {
@@ -110,7 +141,10 @@ public class Q_RL extends PacmanController {
 
         if (minGhost != null) {
             // Hunt the nearest edible ghost
-            return game.getNextMoveTowardsTarget(current, game.getGhostCurrentNodeIndex(minGhost), Constants.DM.PATH);
+            MOVE huntMove = game.getNextMoveTowardsTarget(current, game.getGhostCurrentNodeIndex(minGhost),
+                    Constants.DM.PATH);
+            printMoveInfo("Hunting the nearest edible ghost", huntMove, game);
+            return huntMove;
         }
 
         // Strategy 4: New PO strategy as now S3 can fail if nothing you can see
@@ -123,11 +157,11 @@ public class Q_RL extends PacmanController {
                 if (random.nextDouble() < EXPLORATION_PROBABILITY) {
                     // Exploration: choose a random move
                     selectedMove = possibleMoves[random.nextInt(possibleMoves.length)];
-                    System.out.println("Exploration: Choosing a random move - " + selectedMove);
+                    printMoveInfo("Exploration: Choosing a random move", selectedMove, game);
                 } else {
                     // Exploitation: choose the move with the highest Q-value
                     selectedMove = getBestMove(current, possibleMoves);
-                    System.out.println("Exploitation: Choosing the best move based on Q-values - " + selectedMove);
+                    printMoveInfo("Exploitation: Choosing the best move based on Q-values", selectedMove, game);
                 }
 
                 if (lastMove != null) {
@@ -155,6 +189,7 @@ public class Q_RL extends PacmanController {
         } catch (NullPointerException e) {
             System.err.println("Error: NullPointerException occurred during Q-learning update.");
             e.printStackTrace(); // Print the stack trace for debugging
+            return MOVE.NEUTRAL;
         }
 
         displayQValues();
@@ -198,36 +233,58 @@ public class Q_RL extends PacmanController {
 
     // Calculate the reward based on the game state
     private double calculateReward(Game game) {
-        int current = game.getPacmanCurrentNodeIndex();
+        // int current = game.getPacmanCurrentNodeIndex();
 
-        // +1 for eating a pill
-        int[] pills = game.getPillIndices();
-        for (int pill : pills) {
-            if (current == pill && game.isPillStillAvailable(pill)) {
-                return 1.0;
-            }
-        }
+        // // Reward for eating a pill
+        // int[] pills = game.getPillIndices();
+        // for (int pill : pills) {
+        // if (current == pill && game.isPillStillAvailable(pill)) {
+        // return PILL_REWARD;
+        // }
+        // }
 
-        // -10 for getting caught by a non-edible ghost
-        for (Constants.GHOST ghost : Constants.GHOST.values()) {
-            if (game.getGhostEdibleTime(ghost) == 0 && game.getGhostLairTime(ghost) == 0) {
-                int ghostLocation = game.getGhostCurrentNodeIndex(ghost);
-                if (ghostLocation != -1 && current == ghostLocation) {
-                    return -10.0;
-                }
-            }
-        }
+        // // Penalty for getting caught by a non-edible ghost
+        // for (Constants.GHOST ghost : Constants.GHOST.values()) {
+        // if (game.getGhostEdibleTime(ghost) == 0 && game.getGhostLairTime(ghost) == 0)
+        // {
+        // int ghostLocation = game.getGhostCurrentNodeIndex(ghost);
+        // if (ghostLocation != -1 && current == ghostLocation) {
+        // return CAUGHT_BY_NON_EDIBLE_GHOST_PENALTY;
+        // }
+        // }
+        // }
 
-        // +5 for eating an edible ghost
-        for (Constants.GHOST ghost : Constants.GHOST.values()) {
-            if (game.getGhostEdibleTime(ghost) > 0 && game.getGhostCurrentNodeIndex(ghost) == current) {
-                return 5.0;
-            }
-        }
+        // // Reward for eating an edible ghost
+        // for (Constants.GHOST ghost : Constants.GHOST.values()) {
+        // if (game.getGhostEdibleTime(ghost) > 0 &&
+        // game.getGhostCurrentNodeIndex(ghost) == current) {
+        // return EATING_EDIBLE_GHOST_REWARD;
+        // }
+        // }
 
-        // No immediate reward
-        return 0.0;
+        // // No immediate reward
+        // return 0.0;
+        double livesPenalty = (3 - game.getPacmanNumberOfLivesRemaining()) * CAUGHT_BY_NON_EDIBLE_GHOST_PENALTY;
+        double timeStepPenalty = game.getCurrentLevelTime() * DECAY_PENALTY;
+
+        double eatenPillsReward = (game.getNumberOfPills() - game.getNumberOfActivePills()) * PILL_REWARD;
+        double eatenGhostsReward = game.getNumGhostsEaten() * EATING_EDIBLE_GHOST_REWARD;
+        double currentLevel = game.getCurrentLevel() * LEVEL_UP_REWARD;
+
+        double reward = (eatenPillsReward +
+                eatenGhostsReward +
+                currentLevel +
+                timeStepPenalty +
+                livesPenalty);
+        this.current_reward.add(reward);
+        return this.current_reward.get(this.current_reward.size() - 1);
     }
+
+    public ArrayList<Double> getRewards() {
+        return this.current_reward;
+    }
+
+    
 
     private void displayQValues() {
         System.out.println("Q-values:");
@@ -265,4 +322,5 @@ public class Q_RL extends PacmanController {
             return Objects.hash(state, action);
         }
     }
+
 }
