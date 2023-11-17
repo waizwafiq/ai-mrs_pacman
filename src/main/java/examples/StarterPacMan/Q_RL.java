@@ -50,7 +50,7 @@ import java.util.Random;
 public class Q_RL extends PacmanController {
     private static final double LEARNING_RATE = 0.1;
     private static final double DISCOUNT_FACTOR = 0.9;
-    private static final double EXPLORATION_PROBABILITY = 1;
+    private static final double EXPLORATION_PROBABILITY = 0.1;
 
     private Random random = new Random();
     private Map<StateActionPair, Double> qValues = new HashMap<>();
@@ -60,7 +60,7 @@ public class Q_RL extends PacmanController {
     public MOVE getMove(Game game, long timeDue) {
         int current = game.getPacmanCurrentNodeIndex();
 
-        // System.out.println(current);
+        // System.out.println(qValues.keySet());
 
         // Strategy 1: Adjusted for PO (Pill Observations)
         for (Constants.GHOST ghost : Constants.GHOST.values()) {
@@ -75,25 +75,7 @@ public class Q_RL extends PacmanController {
             }
         }
 
-        /// Strategy 2: Find nearest edible ghost and go after them
-        int minDistance = Integer.MAX_VALUE;
-        Constants.GHOST minGhost = null;
-        for (Constants.GHOST ghost : Constants.GHOST.values()) {
-            if (game.getGhostEdibleTime(ghost) > 0) {
-                int distance = game.getShortestPathDistance(current, game.getGhostCurrentNodeIndex(ghost));
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    minGhost = ghost;
-                }
-            }
-        }
-
-        if (minGhost != null) {
-            // Hunt the nearest edible ghost
-            return game.getNextMoveTowardsTarget(current, game.getGhostCurrentNodeIndex(minGhost), Constants.DM.PATH);
-        }
-
-        // Strategy 3: Go after the pills and power pills that we can see
+        // Strategy 2: Go after the pills and power pills that we can see
         int[] pills = game.getPillIndices();
         int[] powerPills = game.getPowerPillIndices();
 
@@ -113,43 +95,69 @@ public class Q_RL extends PacmanController {
             }
         }
 
+        /// Strategy 3: Find nearest edible ghost and go after them
+        int minDistance = Integer.MAX_VALUE;
+        Constants.GHOST minGhost = null;
+        for (Constants.GHOST ghost : Constants.GHOST.values()) {
+            if (game.getGhostEdibleTime(ghost) > 0) {
+                int distance = game.getShortestPathDistance(current, game.getGhostCurrentNodeIndex(ghost));
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    minGhost = ghost;
+                }
+            }
+        }
+
+        if (minGhost != null) {
+            // Hunt the nearest edible ghost
+            return game.getNextMoveTowardsTarget(current, game.getGhostCurrentNodeIndex(minGhost), Constants.DM.PATH);
+        }
+
         // Strategy 4: New PO strategy as now S3 can fail if nothing you can see
         // Going to pick a random action here
         MOVE[] possibleMoves = game.getPossibleMoves(current, lastMove);
 
-        if (possibleMoves.length > 0) {
-            MOVE selectedMove;
-            if (random.nextDouble() < EXPLORATION_PROBABILITY) {
-                // Exploration: choose a random move
-                selectedMove = possibleMoves[random.nextInt(possibleMoves.length)];
-                System.out.println("Exploration: Choosing a random move - " + selectedMove);
-            } else {
-                // Exploitation: choose the move with the highest Q-value
-                selectedMove = getBestMove(current, possibleMoves);
-                System.out.println("Exploitation: Choosing the best move based on Q-values - " + selectedMove);
+        try {
+            if (possibleMoves.length > 0) {
+                MOVE selectedMove;
+                if (random.nextDouble() < EXPLORATION_PROBABILITY) {
+                    // Exploration: choose a random move
+                    selectedMove = possibleMoves[random.nextInt(possibleMoves.length)];
+                    System.out.println("Exploration: Choosing a random move - " + selectedMove);
+                } else {
+                    // Exploitation: choose the move with the highest Q-value
+                    selectedMove = getBestMove(current, possibleMoves);
+                    System.out.println("Exploitation: Choosing the best move based on Q-values - " + selectedMove);
+                }
+
+                if (lastMove != null) {
+                    // Q-learning update step
+                    StateActionPair stateActionPair = new StateActionPair(current, lastMove);
+                    double reward = calculateReward(game);
+                    double currentQValue = qValues.getOrDefault(stateActionPair, 0.0);
+                    double maxNextQValue = getMaxQValue(game, current);
+                    double updatedQValue = currentQValue
+                            + LEARNING_RATE * (reward + DISCOUNT_FACTOR * maxNextQValue - currentQValue);
+                    qValues.put(stateActionPair, updatedQValue);
+
+                    // System.out.println("Q-learning Update:");
+                    // System.out.println(" State-Action Pair: " + stateActionPair.state + " - " +
+                    // stateActionPair.action);
+                    // System.out.println(" Reward: " + reward);
+                    // System.out.println(" Current Q-value: " + currentQValue);
+                    // System.out.println(" Max Next Q-value: " + maxNextQValue);
+                    // System.out.println(" Updated Q-value: " + updatedQValue);
+                }
+
+                lastMove = selectedMove;
+                return selectedMove;
             }
-
-            if (lastMove != null) {
-                // Q-learning update step
-                StateActionPair stateActionPair = new StateActionPair(current, lastMove);
-                double reward = calculateReward(game);
-                double currentQValue = qValues.getOrDefault(stateActionPair, 0.0);
-                double maxNextQValue = getMaxQValue(game, current);
-                double updatedQValue = currentQValue
-                        + LEARNING_RATE * (reward + DISCOUNT_FACTOR * maxNextQValue - currentQValue);
-                qValues.put(stateActionPair, updatedQValue);
-
-                // System.out.println("Q-learning Update:");
-                // System.out.println("   State-Action Pair: " + stateActionPair.state + " - " + stateActionPair.action);
-                // System.out.println("   Reward: " + reward);
-                // System.out.println("   Current Q-value: " + currentQValue);
-                // System.out.println("   Max Next Q-value: " + maxNextQValue);
-                // System.out.println("   Updated Q-value: " + updatedQValue);
-            }
-
-            lastMove = selectedMove;
-            return selectedMove;
+        } catch (NullPointerException e) {
+            System.err.println("Error: NullPointerException occurred during Q-learning update.");
+            e.printStackTrace(); // Print the stack trace for debugging
         }
+
+        displayQValues();
 
         // Must be possible to turn around
         return game.getPacmanLastMoveMade().opposite();
@@ -168,7 +176,7 @@ public class Q_RL extends PacmanController {
                 bestMove = move;
             }
         }
-
+        System.out.println("Best move: " + bestMove);
         return bestMove;
     }
 
@@ -190,10 +198,46 @@ public class Q_RL extends PacmanController {
 
     // Calculate the reward based on the game state
     private double calculateReward(Game game) {
-        // Implement your own reward function based on the game state
-        // Example: +1 for eating a pill, -1 for getting caught by a ghost, etc.
-        // Return 0 for now (no immediate reward)
-        return 0;
+        int current = game.getPacmanCurrentNodeIndex();
+
+        // +1 for eating a pill
+        int[] pills = game.getPillIndices();
+        for (int pill : pills) {
+            if (current == pill && game.isPillStillAvailable(pill)) {
+                return 1.0;
+            }
+        }
+
+        // -10 for getting caught by a non-edible ghost
+        for (Constants.GHOST ghost : Constants.GHOST.values()) {
+            if (game.getGhostEdibleTime(ghost) == 0 && game.getGhostLairTime(ghost) == 0) {
+                int ghostLocation = game.getGhostCurrentNodeIndex(ghost);
+                if (ghostLocation != -1 && current == ghostLocation) {
+                    return -10.0;
+                }
+            }
+        }
+
+        // +5 for eating an edible ghost
+        for (Constants.GHOST ghost : Constants.GHOST.values()) {
+            if (game.getGhostEdibleTime(ghost) > 0 && game.getGhostCurrentNodeIndex(ghost) == current) {
+                return 5.0;
+            }
+        }
+
+        // No immediate reward
+        return 0.0;
+    }
+
+    private void displayQValues() {
+        System.out.println("Q-values:");
+        for (Map.Entry<StateActionPair, Double> entry : qValues.entrySet()) {
+            StateActionPair stateActionPair = entry.getKey();
+            double qValue = entry.getValue();
+            System.out.println("State-Action Pair: " + stateActionPair.state + " - " + stateActionPair.action +
+                    " | Q-value: " + qValue);
+        }
+        System.out.println();
     }
 
     // Represents a state-action pair for Q-learning
