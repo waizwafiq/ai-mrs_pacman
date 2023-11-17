@@ -63,9 +63,10 @@ public class Dijkstra extends PacmanController {
                         if (ghostDistance < MIN_DISTANCE) {
                             MOVE awayMove = game.getNextMoveAwayFromTarget(node, ghostLocation, Constants.DM.PATH);
                             // Ensure that Pac-Man does not move in the opposite direction
-                            if (awayMove != lastMoveMade.opposite()) {
-                                return awayMove;
-                            }
+                            // if (awayMove != lastMoveMade.opposite()) {
+                            //     return awayMove;
+                            // }
+                            return awayMove;
                         }
                     }
                 }
