@@ -11,4 +11,4 @@ Run `Main.java`
 
 Original repo by https://github.com/solar-1992/PacManEngine.<br/>
 
-Repo then forked by https://github.com/kfkok/TreeSearchMsPacMan: A simple tree search controller for Ms. Pac-Man Vs Ghost Team Competition; Implemented based on this [paper](https://www.researchgate.net/publication/221157530_A_simple_tree_search_method_for_playing_Ms_Pac-Man)
+Repo then cloned from https://github.com/kfkok/TreeSearchMsPacMan: A simple tree search controller for Ms. Pac-Man Vs Ghost Team Competition; Implemented based on this [paper](https://www.researchgate.net/publication/221157530_A_simple_tree_search_method_for_playing_Ms_Pac-Man)
