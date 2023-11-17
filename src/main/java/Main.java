@@ -20,14 +20,16 @@ import java.util.EnumMap;
 public class Main {
 
     public static void main(String[] args) {
+    	
+    	int sightRadius = 10; // 5000 is maximum
 
         Executor executor = new Executor.Builder()
                 .setVisual(true)
                 .setPacmanPO(false)
-                .setTickLimit(10000)
+                .setTickLimit(20000)
                 .setScaleFactor(3) // Increase game visual size
                 .setPOType(POType.RADIUS) // pacman sense objects around it in a radius wide fashion instead of straight line sights
-                .setSightLimit(5000) // The sight radius limit, set to maximum 
+                .setSightLimit(sightRadius) // The sight radius limit, set to maximum 
                 .build();
 
         EnumMap<GHOST, IndividualGhostController> controllers = new EnumMap<>(GHOST.class);
@@ -36,8 +38,21 @@ public class Main {
         controllers.put(GHOST.BLINKY, new Blinky());
         controllers.put(GHOST.PINKY, new Pinky());
         controllers.put(GHOST.SUE, new Sue());
-
+        
+        
         MASController ghosts = new POCommGhosts(50);
-        executor.runGame(new TreeSearchPacMan(), ghosts, 10);
+        
+        
+        int speed = 25; // smaller number will run faster
+        // executor.runGame(new SecondCustomAI(), ghosts, speed); 
+        
+        // executor.runGame(new RandomWalk(), ghosts, speed); 
+        // executor.runGame(new AStar(), ghosts, speed); 
+        executor.runGame(new Q_RL(), new MASController(controllers), speed); 
+        // executor.runGame(new Dijkstra(), ghosts, speed); 
+        // executor.runGame(new MCTS(), ghosts, speed); 
+        // executor.runGame(new TreeSearchPacMan(), ghosts, speed); 
+        // executor.runGame(new MyPacMan(), new MASController(controllers), speed);
+
     }
 }

@@ -30,7 +30,7 @@ public class MyPacMan extends PacmanController {
                 int ghostLocation = game.getGhostCurrentNodeIndex(ghost);
                 if (ghostLocation != -1) {
                     if (game.getShortestPathDistance(current, ghostLocation) < MIN_DISTANCE) {
-//                        System.out.println("Evading Ghost");
+                        // System.out.println("Evading Ghost");
                         return game.getNextMoveAwayFromTarget(current, ghostLocation, Constants.DM.PATH);
                     }
                 }
@@ -53,7 +53,7 @@ public class MyPacMan extends PacmanController {
         }
 
         if (minGhost != null) {
-//            System.out.println("Hunting Ghost");
+            // System.out.println("Hunting Ghost");
             return game.getNextMoveTowardsTarget(current, game.getGhostCurrentNodeIndex(minGhost), Constants.DM.PATH);
         }
 
@@ -64,7 +64,7 @@ public class MyPacMan extends PacmanController {
         ArrayList<Integer> targets = new ArrayList<Integer>();
 
         for (int i = 0; i < pills.length; i++) {
-            //check which pills are available
+            // check which pills are available
             Boolean pillStillAvailable = game.isPillStillAvailable(i);
             if (pillStillAvailable != null) {
                 if (pillStillAvailable) {
@@ -73,7 +73,7 @@ public class MyPacMan extends PacmanController {
             }
         }
 
-        for (int i = 0; i < powerPills.length; i++) {            //check with power pills are available
+        for (int i = 0; i < powerPills.length; i++) { // check with power pills are available
             Boolean pillStillAvailable = game.isPillStillAvailable(i);
             if (pillStillAvailable != null) {
                 if (pillStillAvailable) {
@@ -83,16 +83,16 @@ public class MyPacMan extends PacmanController {
         }
 
         if (!targets.isEmpty()) {
-            int[] targetsArray = new int[targets.size()];        //convert from ArrayList to array
+            int[] targetsArray = new int[targets.size()]; // convert from ArrayList to array
 
             for (int i = 0; i < targetsArray.length; i++) {
                 targetsArray[i] = targets.get(i);
             }
-            //return the next direction once the closest target has been identified
-//            System.out.println("Hunting pill");
-            return game.getNextMoveTowardsTarget(current, game.getClosestNodeIndexFromNodeIndex(current, targetsArray, Constants.DM.PATH), Constants.DM.PATH);
+            // return the next direction once the closest target has been identified
+            // System.out.println("Hunting pill");
+            return game.getNextMoveTowardsTarget(current,
+                    game.getClosestNodeIndexFromNodeIndex(current, targetsArray, Constants.DM.PATH), Constants.DM.PATH);
         }
-
 
         // Strategy 4: New PO strategy as now S3 can fail if nothing you can see
         // Going to pick a random action here
@@ -101,7 +101,7 @@ public class MyPacMan extends PacmanController {
             return moves[random.nextInt(moves.length)];
         }
 
-//        System.out.println("Just turn around");
+        // System.out.println("Just turn around");
         // Must be possible to turn around
         return game.getPacmanLastMoveMade().opposite();
     }

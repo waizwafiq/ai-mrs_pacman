@@ -28,8 +28,8 @@ public class TreeSearchPacMan extends PacmanController {
 	 private Game game;
 	 private int pacmanCurrentNodeIndex;
 	 MOVE pacmanLastMoveMade; 
-	 int pathLengthBase = 94; // 70, 70 // Make it longer when no pills around
-	 int minGhostDistanceBase = 100; // 80, 100
+	 int pathLengthBase = 100; // 70, 70, 100 // Make it longer when no pills around
+	 int minGhostDistanceBase = 100; // 80, 100, 100
 	 private List<Path> paths = new ArrayList<>();
 	 
 	private int getRandomInt(int min, int max){
@@ -64,9 +64,10 @@ public class TreeSearchPacMan extends PacmanController {
     	Path bestPath = paths.get(0);
     	MOVE bestPathMove = game.getMoveToMakeToReachDirectNeighbour(pacmanCurrentNodeIndex, bestPath.start);
     	
+    	
     	// No pills around while at junction but has safe paths, choose random safe path
-		if (bestPath.value == 0 && game.isJunction(pacmanCurrentNodeIndex))
-		{
+    	if (bestPath.value == 0 && game.isJunction(pacmanCurrentNodeIndex))
+		{			
 			// Get only safe paths from paths
     		List<MOVE> safeMoves = new ArrayList<>();
     		for (Path path: paths)
@@ -110,6 +111,7 @@ public class TreeSearchPacMan extends PacmanController {
     			}
     		}
 		}
+    	
     	
     	return bestPathMove;
     }
@@ -214,7 +216,7 @@ public class TreeSearchPacMan extends PacmanController {
         				segment.color = Color.RED;
         			}
         			       			
-    				value += segment.powerPillsCount * 5;          				 				
+    				value += segment.powerPillsCount * 1;          				 				
         			
         			description += segment.direction.toString() + " ";
         		}
@@ -296,7 +298,7 @@ public class TreeSearchPacMan extends PacmanController {
             			{
             				currentSegment.ghosts.add(ghost);
             				
-            				if (!game.isGhostEdible(ghost) 
+            				if ((!game.isGhostEdible(ghost) || (game.isGhostEdible(ghost) && game.getGhostEdibleTime(ghost) < 2)) 
             						&& game.getGhostLastMoveMade(ghost) == currentSegment.direction.opposite()
             						&& game.getEuclideanDistance(pacmanCurrentNodeIndex, currentNode) <= minGhostDistance )
             				{
