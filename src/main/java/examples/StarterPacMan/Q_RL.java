@@ -95,7 +95,7 @@ public class Q_RL extends PacmanController {
                     if (game.getShortestPathDistance(current, ghostLocation) < MIN_DISTANCE_TO_EVADE_GHOST) {
                         // Evade the ghost
                         MOVE evadeMove = game.getNextMoveAwayFromTarget(current, ghostLocation, Constants.DM.PATH);
-                        printMoveInfo("Evading ghost", evadeMove, game);
+                        // printMoveInfo("Evading ghost", evadeMove, game);
                         return evadeMove;
                     }
                 }
@@ -111,7 +111,7 @@ public class Q_RL extends PacmanController {
             if (pillStillAvailable != null && pillStillAvailable) {
                 // Move towards the nearest visible pill
                 MOVE pillMove = game.getNextMoveTowardsTarget(current, pills[i], Constants.DM.PATH);
-                printMoveInfo("Going after visible pill", pillMove, game);
+                // printMoveInfo("Going after visible pill", pillMove, game);
                 return pillMove;
             }
         }
@@ -121,7 +121,7 @@ public class Q_RL extends PacmanController {
             if (powerPillStillAvailable != null && powerPillStillAvailable) {
                 // Move towards the nearest visible power pill
                 MOVE powerPillMove = game.getNextMoveTowardsTarget(current, powerPills[i], Constants.DM.PATH);
-                printMoveInfo("Going after visible power pill", powerPillMove, game);
+                // printMoveInfo("Going after visible power pill", powerPillMove, game);
                 return powerPillMove;
             }
         }
@@ -143,7 +143,7 @@ public class Q_RL extends PacmanController {
             // Hunt the nearest edible ghost
             MOVE huntMove = game.getNextMoveTowardsTarget(current, game.getGhostCurrentNodeIndex(minGhost),
                     Constants.DM.PATH);
-            printMoveInfo("Hunting the nearest edible ghost", huntMove, game);
+            // printMoveInfo("Hunting the nearest edible ghost", huntMove, game);
             return huntMove;
         }
 
@@ -157,11 +157,11 @@ public class Q_RL extends PacmanController {
                 if (random.nextDouble() < EXPLORATION_PROBABILITY) {
                     // Exploration: choose a random move
                     selectedMove = possibleMoves[random.nextInt(possibleMoves.length)];
-                    printMoveInfo("Exploration: Choosing a random move", selectedMove, game);
+                    // printMoveInfo("Exploration: Choosing a random move", selectedMove, game);
                 } else {
                     // Exploitation: choose the move with the highest Q-value
                     selectedMove = getBestMove(current, possibleMoves);
-                    printMoveInfo("Exploitation: Choosing the best move based on Q-values", selectedMove, game);
+                    // printMoveInfo("Exploitation: Choosing the best move based on Q-values", selectedMove, game);
                 }
 
                 if (lastMove != null) {
@@ -192,7 +192,7 @@ public class Q_RL extends PacmanController {
             return MOVE.NEUTRAL;
         }
 
-        displayQValues();
+        // displayQValues();
 
         // Must be possible to turn around
         return game.getPacmanLastMoveMade().opposite();
@@ -220,13 +220,16 @@ public class Q_RL extends PacmanController {
         MOVE[] possibleMoves = game.getPossibleMoves(current, lastMove);
         double maxQValue = Double.NEGATIVE_INFINITY;
 
-        for (MOVE move : possibleMoves) {
+        if (possibleMoves.length > 0) {
+            for (MOVE move : possibleMoves) {
             StateActionPair stateActionPair = new StateActionPair(current, move);
             double qValue = qValues.getOrDefault(stateActionPair, 0.0);
             if (qValue > maxQValue) {
                 maxQValue = qValue;
             }
         }
+        }
+        
 
         return maxQValue;
     }

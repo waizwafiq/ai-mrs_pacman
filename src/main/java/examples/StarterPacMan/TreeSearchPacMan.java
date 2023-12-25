@@ -162,7 +162,8 @@ public class TreeSearchPacMan extends PacmanController {
     		for (GHOST ghost : ghosts)
     			ghostsName += ghost.name() + " ";
     			
-    		String text = description + "::" + " value:" + value + ", safe:" + (safe ? "safe":"unsafe") + ", pills:" + pillsCount + ", power pills:" + powerPillsCount + ", ghost:" + ghostsName;
+			char text = ' ';
+    		// String text = description + "::" + " value:" + value + ", safe:" + (safe ? "safe":"unsafe") + ", pills:" + pillsCount + ", power pills:" + powerPillsCount + ", ghost:" + ghostsName;
     		
     		if (!safe)
     			System.err.println(text);
