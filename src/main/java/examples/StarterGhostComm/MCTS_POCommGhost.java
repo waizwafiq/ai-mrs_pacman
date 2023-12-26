@@ -27,7 +27,8 @@ public class MCTS_POCommGhost extends IndividualGhostController {
     private int tickSeen = -1;
 
     // MCTS PARAMS
-    private final static int NUM_SIMULATIONS = 100; // Adjust the number of simulations as needed
+    private final static int NUM_SIMULATIONS = 500; // Adjust the number of simulations as needed
+    private final static double UCT_CONSTANT = Math.sqrt(2); // Adjust the UCT constant as needed
 
     public MCTS_POCommGhost(Constants.GHOST ghost) {
         this(ghost, 5);
@@ -111,28 +112,32 @@ public class MCTS_POCommGhost extends IndividualGhostController {
     }
 
     private Constants.MOVE runMCTS(Game game) {
-        Node root = new Node(null, null, 0, 0); // root node
-        
+        Node root = new Node(null, game.getGhostLastMoveMade(ghost), game.getGhostCurrentNodeIndex(ghost), game.getPacmanCurrentNodeIndex()); // root node
+
         // Run simulations
         for (int i = 0; i< NUM_SIMULATIONS; i++) {
             // Selection, expansion, simulation, and backpropagration
-            Node selectedNode = select(root);
+            Node selectedNode = select(root, game);
             expand(selectedNode, game);
             int score = simulate(selectedNode, game);
             backpropagate(selectedNode, score);
         }
 
         // Choose the best move based on the most visited child
-        Node bestChild = getBestChild(root);
+        Node bestChild = getBestChild(root, game);
+
+        // Print debug information about the MCTS tree
+        printDebugInfo(root);
+
         return bestChild == null ? Constants.MOVE.NEUTRAL : bestChild.move;
 
     }
 
-    private Node select(Node root) {
+    private Node select(Node root, Game game) {
         Node currentNode = root;
 
         while (!currentNode.children.isEmpty() && !isTerminal(currentNode)) {
-            currentNode = getBestChild(currentNode);
+            currentNode = getBestChild(currentNode, game);
         }
 
         return currentNode;
@@ -142,8 +147,13 @@ public class MCTS_POCommGhost extends IndividualGhostController {
         // Generate child nodes for legal moves from the current game state
         Constants.MOVE[] possibleMoves = game.getPossibleMoves(node.ghostPosition, node.move); //check
 
-
-        for (Constants.MOVE move : possibleMoves) {
+        if (possibleMoves == null) {
+            // System.out.println("possibleMoves: null");
+            return;
+        }
+        else {
+            // System.out.println("possibleMoves: " + possibleMoves);
+            for (Constants.MOVE move : possibleMoves) {
             int newGhostPosition = game.getNeighbour(node.ghostPosition, move);
             int newPacManPosition = game.getNeighbour(node.pacManPosition, move);
 
@@ -151,6 +161,9 @@ public class MCTS_POCommGhost extends IndividualGhostController {
             Node child = new Node(node, move, newGhostPosition, newPacManPosition);
             node.children.add(child);
         }
+        }
+
+        
     }
 
     private int simulate(Node node, Game game) {
@@ -184,6 +197,47 @@ public class MCTS_POCommGhost extends IndividualGhostController {
         return score;
     }
 
+    private void backpropagate(Node node, int score) {
+        // Backpropagate the score up the tree
+        while (node != null ) {
+            node.visits++;
+            node.score += score;
+            node = node.parent;
+        }
+    }
+
+    private Node getBestChild(Node node, Game game) {
+        // Choose the child with the highest UCT value
+        double bestUCTValue = Double.NEGATIVE_INFINITY;
+        Node bestChild = null;
+
+        for (Node child : node.children) {
+            double uctValue = getUCTValue(node, child, game);
+            if (uctValue > bestUCTValue) {
+                bestUCTValue = uctValue;
+                bestChild = child;
+            }
+        }
+
+        return bestChild;
+    }
+
+    private double getUCTValue(Node parent, Node child, Game game) {
+        if (child.visits == 0) {
+            return Double.POSITIVE_INFINITY;
+        }
+
+        double exploitationValue = (double) child.score / child.visits;
+        double explorationValue = Math.sqrt(2 * Math.log(parent.visits) / child.visits);
+
+        // Factor based on the reciprocal of the shortest path distance between ghost and Pac-Man
+        double ghostDistanceFactor = 1.0 / (1.0 + game.getShortestPathDistance(child.ghostPosition, child.pacManPosition));
+
+        // Combined UCT value incorporating the influence of ghost and Pac-Man positions
+        return exploitationValue + UCT_CONSTANT * explorationValue * ghostDistanceFactor;
+
+    }
+
     private Constants.MOVE getRandomMove(Game game, Node node) {
         if (node == null || node.move == null) {
             return Constants.MOVE.NEUTRAL;
@@ -192,6 +246,24 @@ public class MCTS_POCommGhost extends IndividualGhostController {
             Constants.MOVE[] possibleMoves = game.getPossibleMoves(node.ghostPosition, node.move);
             return possibleMoves[rnd.nextInt(possibleMoves.length)];
         }
+    }
+
+    private boolean isTerminal(Node node) {
+        return node.children.isEmpty();
+    }
+
+    private void printDebugInfo(Node root) {
+        // Print debug information about the MCTS tree
+        System.out.println("MCTS Tree Information:");
+        System.out.println("Root Visits: " + root.visits);
+
+        for (Node child : root.children) {
+            System.out.println("Child Move: " + child.move);
+            System.out.println("Child Visits: " + child.visits);
+            System.out.println("Child Score: " + child.score);
+        }
+
+        System.out.println("Best Move Chosen: " + (root.move != null ? root.move : "NEUTRAL"));
     }
 
     private static class Node {

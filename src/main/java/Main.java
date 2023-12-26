@@ -11,6 +11,8 @@ import pacman.controllers.MASController;
 import pacman.controllers.examples.po.POCommGhosts;
 import examples.StarterGhostComm.QLearning_POCommGhost;
 import examples.StarterGhostComm.QLearning_Ghost;
+import examples.StarterGhostComm.MCTS_POCommGhost;
+import examples.StarterGhostComm.MCTS_Ghost;
 import pacman.game.Constants.*;
 import pacman.game.internal.POType;
 
@@ -99,9 +101,9 @@ public class Main {
         // controllers.put(GHOST.PINKY, new Pinky());
         // controllers.put(GHOST.SUE, new Sue());
 
-        MASController ghosts = new QLearning_Ghost(50);
-
-        int speed = 1; // smaller number will run faster
+        // MASController ghosts = new QLearning_Ghost(50);
+        MASController ghosts = new MCTS_Ghost(50);
+        int speed = 4; // smaller number will run faster
         // executor.runGame(new TreeSearchPacMan(), ghosts, speed);
         // executor.runGame(new InformationSetMCTSPacMan(), ghosts, speed);
         
