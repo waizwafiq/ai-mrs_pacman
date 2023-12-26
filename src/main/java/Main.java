@@ -9,6 +9,8 @@ import pacman.Executor;
 import pacman.controllers.IndividualGhostController;
 import pacman.controllers.MASController;
 import pacman.controllers.examples.po.POCommGhosts;
+import examples.StarterGhostComm.QLearning_POCommGhost;
+import examples.StarterGhostComm.QLearning_Ghost;
 import pacman.game.Constants.*;
 import pacman.game.internal.POType;
 
@@ -90,35 +92,35 @@ public class Main {
                 .setSightLimit(sightRadius) // The sight radius limit, set to maximum
                 .build();
 
-        EnumMap<GHOST, IndividualGhostController> controllers = new EnumMap<>(GHOST.class);
+        // EnumMap<GHOST, IndividualGhostController> controllers = new EnumMap<>(GHOST.class);
 
-        controllers.put(GHOST.INKY, new Inky());
-        controllers.put(GHOST.BLINKY, new Blinky());
-        controllers.put(GHOST.PINKY, new Pinky());
-        controllers.put(GHOST.SUE, new Sue());
+        // controllers.put(GHOST.INKY, new Inky());
+        // controllers.put(GHOST.BLINKY, new Blinky());
+        // controllers.put(GHOST.PINKY, new Pinky());
+        // controllers.put(GHOST.SUE, new Sue());
 
-        MASController ghosts = new POCommGhosts(50);
+        MASController ghosts = new QLearning_Ghost(50);
 
         int speed = 1; // smaller number will run faster
-
-        executor.runGame(new InformationSetMCTSPacMan(), ghosts, speed);
+        // executor.runGame(new TreeSearchPacMan(), ghosts, speed);
+        // executor.runGame(new InformationSetMCTSPacMan(), ghosts, speed);
         
-        // Q_RL qlearning_model = new Q_RL();
-        // executor.runGame(qlearning_model, ghosts, speed);
-        // ArrayList<Double> rewards_list = qlearning_model.getRewards();
+        Q_RL qlearning_model = new Q_RL();
+        executor.runGame(qlearning_model, ghosts, speed);
+        ArrayList<Double> rewards_list = qlearning_model.getRewards();
 
-        // SwingUtilities.invokeLater(() -> {
-        //     Main mainInstance = new Main();
-        //     mainInstance.setData(rewards_list); // Set the rewards_list to the data variable
-        //     LineChart_AWT chart = new LineChart_AWT(
-        //             "Rewards Chart",
-        //             "Rewards vs Time Step",
-        //             mainInstance.getData());
+        SwingUtilities.invokeLater(() -> {
+            Main mainInstance = new Main();
+            mainInstance.setData(rewards_list); // Set the rewards_list to the data variable
+            LineChart_AWT chart = new LineChart_AWT(
+                    "Rewards Chart",
+                    "Rewards vs Time Step",
+                    mainInstance.getData());
 
-        //     chart.pack();
-        //     RefineryUtilities.centerFrameOnScreen(chart);
-        //     chart.setVisible(true);
-        // });
+            chart.pack();
+            RefineryUtilities.centerFrameOnScreen(chart);
+            chart.setVisible(true);
+        });
     }
 
     public Main() {
